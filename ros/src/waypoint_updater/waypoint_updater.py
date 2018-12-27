@@ -22,7 +22,7 @@ as well as to verify your TL classifier.
 TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 '''
 
-LOOKAHEAD_WPS = 200 # Number of waypoints we will publish. You can change this number
+LOOKAHEAD_WPS = 50 # Number of waypoints we will publish. You can change this number
 LOOP_RATE = 30 # Processing Frequency. Same as waypoint_follower/pure_pursuit.cpp LOOP_RATE
 
 class WaypointUpdater(object):
@@ -84,13 +84,10 @@ class WaypointUpdater(object):
 
 
     def waypoints_cb(self, waypoints):
-        rospy.logwarn('WaypointUpdater::waypoints_cb - Assign base_waypoints')
         self.base_waypoints = waypoints
         if not self.waypoints_2d:
-            rospy.logwarn('WaypointUpdater::waypoints_cb - Creating 2d and tree')
             self.waypoints_2d = [[waypoint.pose.pose.position.x, waypoint.pose.pose.position.y] for waypoint in waypoints.waypoints]
             self.waypoint_tree = KDTree(self.waypoints_2d)
-        rospy.logwarn('WaypointUpdater::waypoints_cb - End')
 
 
     def traffic_cb(self, msg):
