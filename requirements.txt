@@ -1,6 +1,6 @@
 Flask==1.0.2
 attrdict==2.0.0
-eventlet==0.24.1
+eventlet==0.19.0
 python-socketio==3.0.0
 numpy==1.15.4
 Pillow==5.3.0
