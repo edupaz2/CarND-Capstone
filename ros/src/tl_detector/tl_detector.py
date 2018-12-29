@@ -53,6 +53,7 @@ class TLDetector(object):
         self.last_state = TrafficLight.UNKNOWN
         self.last_wp = -1
         self.state_count = 0
+        self.state_published = False
 
         rospy.spin()
 
@@ -95,13 +96,18 @@ class TLDetector(object):
         if self.state != state:
             self.state_count = 0
             self.state = state
+            self.state_published = False
         elif self.state_count >= STATE_COUNT_THRESHOLD:
             self.last_state = self.state
             light_wp = light_wp if state == TrafficLight.RED else -1
             self.last_wp = light_wp
-            self.upcoming_red_light_pub.publish(Int32(light_wp))
+            if not self.state_published:
+                self.upcoming_red_light_pub.publish(Int32(light_wp))
+                self.state_published = True
         else:
-            self.upcoming_red_light_pub.publish(Int32(self.last_wp))
+            if not self.state_published:
+                self.upcoming_red_light_pub.publish(Int32(self.last_wp))
+                self.state_published = True
         self.state_count += 1
 
     def get_closest_waypoint(self, x, y):
