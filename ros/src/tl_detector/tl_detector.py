@@ -80,7 +80,7 @@ class TLDetector(object):
             msg (Image): image from car-mounted camera
 
         """
-        if not self.waypoints_2d:
+        if not self.waypoint_tree:
             return
 
         self.has_image = True
@@ -155,7 +155,7 @@ class TLDetector(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
         """
-        if not self.waypoints_2d:
+        if not self.waypoint_tree:
             return -1, TrafficLight.UNKNOWN
 
         closest_light = None
