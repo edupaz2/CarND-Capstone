@@ -47,6 +47,7 @@ class WaypointUpdater(object):
         self.decelerate_wp = None
         self.decelerate_wp_calculated = False
         self.closest_waypoint_idx = -1
+        self.traffic_light_updated = False
         self.linear_velocity = 0
 
         self.loop()
@@ -57,8 +58,12 @@ class WaypointUpdater(object):
         while not rospy.is_shutdown():
             if self.current_pose and self.base_waypoints and self.waypoint_tree:
                 # Get closest waypoint
-                self.closest_waypoint_idx = self.get_closest_waypoint_idx()
-                self.publish_waypoints()
+                closest_idx = self.get_closest_waypoint_idx()
+                if closest_idx != self.closest_waypoint_idx or self.traffic_light_updated:
+                    self.closest_waypoint_idx = closest_idx
+                    rospy.logwarn('WaypointUpdater::loop - Closest: {0}'.format(self.closest_waypoint_idx))
+                    self.publish_waypoints()
+                self.traffic_light_updated = False
             rate.sleep()
 
 
@@ -101,6 +106,7 @@ class WaypointUpdater(object):
     def traffic_cb(self, msg):
         # Callback for /traffic_waypoint message.
         self.stopline_wp_idx = msg.data
+        self.traffic_light_updated = True
         rospy.logwarn('WaypointUpdater::traffic_cb {0}'.format(self.stopline_wp_idx))
 
 
