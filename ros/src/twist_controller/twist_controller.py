@@ -36,8 +36,8 @@ class Controller(object):
     def control(self, current_vel, dbw_enabled, linear_vel, angular_vel):
         
         if not dbw_enabled:
-        	self.throttle_controller.reset()
-        	return 0., 0., 0.
+            self.throttle_controller.reset()
+            return 0., 0., 0.
 
         current_vel = self.vel_lpf.filt(current_vel)
 
@@ -54,13 +54,14 @@ class Controller(object):
         brake = 0
 
         if linear_vel == 0. and current_vel < 0.1:
-        	throttle = 0
-        	brake = 700 # N*m
+            throttle = 0
+            brake = 700 # N*m
 
-        elif throttle < .1 and vel_error < 0:
-        	throttle = 0
-        	decel = max(vel_error, self.decel_limit)
-        	brake = abs(decel)*self.vehicle_mass*self.wheel_radius # Torque N*m
+        elif throttle < .1 and vel_error < 0: # Waypoint linear_vel is lower than current_vel
+            throttle = 0
+            decel = max(vel_error, self.decel_limit)
+            brake = abs(decel)*self.vehicle_mass*self.wheel_radius # Torque N*m
+            # rospy.logwarn('Controller::control2 vel_error:{0}, linear_vel:{1}, current_vel: {2}, decel:{3}, brake:{4}'.format(vel_error, linear_vel, current_vel, decel, brake))
 
         # Return throttle, brake, steer
         return throttle, brake, steering
