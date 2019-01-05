@@ -67,7 +67,7 @@ class TLClassifier(object):
             results = np.squeeze(results)
             top_k = results.argsort()[-5:][::-1]
 
-            rospy.logwarn("TLClassifier::get_classification: {0}".format([results[i] for i in top_k]))
+            #rospy.logwarn("TLClassifier::get_classification: {0}".format([results[i] for i in top_k]))
             final_result = self.labels[top_k[0]]
             if final_result == "green":
                 return TrafficLight.GREEN

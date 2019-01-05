@@ -14,19 +14,11 @@ import yaml
 from cv2 import imwrite
 
 STATE_COUNT_THRESHOLD = 3
+LOOKAHEAD_WPS = 50 # Number of waypoints we will publish. You can change this number
 
 class TLDetector(object):
     def __init__(self):
         rospy.init_node('tl_detector')
-
-        self.testing = True
-
-        self.current_pose = None
-        self.waypoints = None
-        self.waypoints_2d = None
-        self.waypoint_tree = None
-        self.camera_image = None
-        self.lights = []
 
         sub1 = rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         sub2 = rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
@@ -46,6 +38,16 @@ class TLDetector(object):
 
         self.upcoming_red_light_pub = rospy.Publisher('/traffic_waypoint', Int32, queue_size=1)
 
+        # Member variables
+        self.testing = True
+
+        self.current_pose = None
+        self.base_waypoints = None
+        self.waypoints_2d = None
+        self.waypoint_tree = None
+        self.camera_image = None
+        self.lights = []
+
         self.bridge = CvBridge()
         self.light_classifier = TLClassifier()
         self.listener = tf.TransformListener()
@@ -62,7 +64,7 @@ class TLDetector(object):
 
 
     def waypoints_cb(self, waypoints):
-        self.waypoints = waypoints
+        self.base_waypoints = waypoints
         if not self.waypoints_2d:
             self.waypoints_2d = [[waypoint.pose.pose.position.x, waypoint.pose.pose.position.y] for waypoint in waypoints.waypoints]
             self.waypoint_tree = KDTree(self.waypoints_2d)
@@ -138,13 +140,13 @@ class TLDetector(object):
         # For dumping images to files for training the model
         #res = cv2.imwrite('/home/student/workspace/CarND-Capstone/imgs/sim/img_{0}_{1}.png'.format(wp, self.image_counter), cv_image)
 
-        rospy.logwarn('TLDetector::get_light_state - New image incoming')
+        #rospy.logwarn('TLDetector::get_light_state - New image incoming')
 
         lightState = TrafficLight.UNKNOWN
         if self.image_counter % 10 == 0:
             cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
             lightState = self.light_classifier.get_classification(cv_image)
-            rospy.logwarn('TLDetector::get_light_state - Processing result: {0}'.format(lightState))
+            #rospy.logwarn('TLDetector::get_light_state - Processing result: {0}'.format(lightState))
         self.image_counter += 1
 
         #Get classification
@@ -171,7 +173,8 @@ class TLDetector(object):
             car_wp_idx = self.get_closest_waypoint(self.current_pose.pose.position.x, self.current_pose.pose.position.y)
 
         #find the closest visible traffic light (if one exists)
-        diff = len(self.waypoints.waypoints)
+        lane_wp = self.base_waypoints.waypoints[car_wp_idx:car_wp_idx + LOOKAHEAD_WPS]
+        diff = len(lane_wp)
         for i, light in enumerate(self.lights):
             # Get stop line waypoint index
             line = stop_line_positions[i]
