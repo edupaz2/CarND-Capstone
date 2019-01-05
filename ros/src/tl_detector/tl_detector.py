@@ -15,6 +15,7 @@ from cv2 import imwrite
 
 STATE_COUNT_THRESHOLD = 3
 LOOKAHEAD_WPS = 50 # Number of waypoints we will publish. You can change this number
+LOOP_RATE = 50 # Processing Frequency. Same as waypoint_follower/pure_pursuit.cpp LOOP_RATE
 
 class TLDetector(object):
     def __init__(self):
@@ -58,7 +59,12 @@ class TLDetector(object):
         self.state_count = 0
         self.image_counter = 0
 
-        rospy.spin()
+        self.loop()
+
+    def loop(self):
+        rate = rospy.Rate(LOOP_RATE)
+        while not rospy.is_shutdown():
+            rate.sleep()
 
     def pose_cb(self, msg):
         self.current_pose = msg
@@ -69,7 +75,6 @@ class TLDetector(object):
         if not self.waypoints_2d:
             self.waypoints_2d = [[waypoint.pose.pose.position.x, waypoint.pose.pose.position.y] for waypoint in waypoints.waypoints]
             self.waypoint_tree = KDTree(self.waypoints_2d)
-            self.preprocess_traffic_lights()
 
 
     def traffic_cb(self, msg):
@@ -83,14 +88,9 @@ class TLDetector(object):
             msg (Image): image from car-mounted camera
 
         """
-        if len(self.lights) == 0:
-            return
-
         self.image_counter += 1
-        if self.image_counter % 10 != 0:
+        if self.image_counter % 5 != 0:
             return
-
-        self.image_counter = 0
 
         self.has_image = True
         self.camera_image = msg
@@ -144,15 +144,15 @@ class TLDetector(object):
             self.prev_light_loc = None
             return TrafficLight.UNKNOWN
 
-        # For dumping images to files for training the model
-        #res = cv2.imwrite('/home/student/workspace/CarND-Capstone/imgs/sim/img_{0}_{1}.png'.format(wp, self.image_counter), cv_image)
-
         #rospy.logwarn('TLDetector::get_light_state - New image incoming')
 
         lightState = TrafficLight.UNKNOWN
-        cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
+        cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "rgb8")
         lightState = self.light_classifier.get_classification(cv_image)
         #rospy.logwarn('TLDetector::get_light_state - Processing result: {0}'.format(lightState))
+
+        # For dumping images to files for training the model
+        #res = cv2.imwrite('/home/student/workspace/CarND-Capstone/imgs/sim/img_{0}_{1}.png'.format(wp, self.image_counter), cv_image)
 
         #Get classification
         return lightState
@@ -185,6 +185,8 @@ class TLDetector(object):
         """
         if not self.waypoint_tree:
             return -1, TrafficLight.UNKNOWN
+
+        self.preprocess_traffic_lights()
 
         closest_light = None
         line_wp_idx = None
