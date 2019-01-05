@@ -67,13 +67,16 @@ class TLClassifier(object):
             results = np.squeeze(results)
             top_k = results.argsort()[-5:][::-1]
 
-            #rospy.logwarn("TLClassifier::get_classification: {0}".format([results[i] for i in top_k]))
+            rospy.logwarn("TLClassifier::get_classification: {0}".format(['{0}:{1}'.format(self.labels[i],results[i]) for i in top_k]))
             final_result = self.labels[top_k[0]]
             if final_result == "green":
+                rospy.loginfo('TLClassifier::get_classification - Got a GREEN')
                 return TrafficLight.GREEN
             elif final_result == "red":
+                rospy.loginfo('TLClassifier::get_classification - Got a RED')
                 return TrafficLight.RED
             elif final_result == "yellow":
+                rospy.loginfo('TLClassifier::get_classification - Got a YELLOW')
                 return TrafficLight.YELLOW
 
         return TrafficLight.UNKNOWN

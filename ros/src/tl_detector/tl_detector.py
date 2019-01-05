@@ -85,6 +85,11 @@ class TLDetector(object):
         if not self.waypoint_tree:
             return
 
+        if self.image_counter % 10 != 0:
+            self.image_counter += 1
+            return
+        self.image_counter = 0
+
         self.has_image = True
         self.camera_image = msg
         light_wp, state = self.process_traffic_lights()
@@ -143,11 +148,9 @@ class TLDetector(object):
         #rospy.logwarn('TLDetector::get_light_state - New image incoming')
 
         lightState = TrafficLight.UNKNOWN
-        if self.image_counter % 10 == 0:
-            cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
-            lightState = self.light_classifier.get_classification(cv_image)
-            #rospy.logwarn('TLDetector::get_light_state - Processing result: {0}'.format(lightState))
-        self.image_counter += 1
+        cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
+        lightState = self.light_classifier.get_classification(cv_image)
+        #rospy.logwarn('TLDetector::get_light_state - Processing result: {0}'.format(lightState))
 
         #Get classification
         return lightState
