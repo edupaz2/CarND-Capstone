@@ -138,12 +138,13 @@ class TLDetector(object):
         # For dumping images to files for training the model
         #res = cv2.imwrite('/home/student/workspace/CarND-Capstone/imgs/sim/img_{0}_{1}.png'.format(wp, self.image_counter), cv_image)
 
-        rospy.logwarn('TLDetector::get_light_state - new image')
+        rospy.logwarn('TLDetector::get_light_state - New image incoming')
 
         lightState = TrafficLight.UNKNOWN
         if self.image_counter % 10 == 0:
             cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
             lightState = self.light_classifier.get_classification(cv_image)
+            rospy.logwarn('TLDetector::get_light_state - Processing result: {0}'.format(lightState))
         self.image_counter += 1
 
         #Get classification
