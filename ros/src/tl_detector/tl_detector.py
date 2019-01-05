@@ -12,6 +12,7 @@ import tf
 import cv2
 import yaml
 from cv2 import imwrite
+import time
 
 STATE_COUNT_THRESHOLD = 3
 LOOKAHEAD_WPS = 50 # Number of waypoints we will publish. You can change this number
@@ -57,14 +58,16 @@ class TLDetector(object):
         self.light_wp = -1
         self.state = TrafficLight.UNKNOWN
         self.state_count = 0
-        self.image_counter = 0
+        self.image_timestamp = time.time()
 
         self.loop()
+
 
     def loop(self):
         rate = rospy.Rate(LOOP_RATE)
         while not rospy.is_shutdown():
             rate.sleep()
+
 
     def pose_cb(self, msg):
         self.current_pose = msg
@@ -90,9 +93,11 @@ class TLDetector(object):
             msg (Image): image from car-mounted camera
 
         """
-        self.image_counter += 1
-        if self.image_counter % 5 != 0:
+        current_t = time.time()
+        if current_t - self.image_timestamp < 1.0:
             return
+
+        self.image_timestamp = current_t
 
         self.has_image = True
         self.camera_image = msg
@@ -127,6 +132,7 @@ class TLDetector(object):
         """
         closest_idx = self.waypoint_tree.query([x, y], 1)[1]
         return closest_idx
+
 
     def get_light_state(self, light, wp):
         """Determines the current color of the traffic light
