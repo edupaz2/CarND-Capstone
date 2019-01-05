@@ -24,7 +24,7 @@ TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 '''
 
 LOOKAHEAD_WPS = 50 # Number of waypoints we will publish. You can change this number
-LOOP_RATE = 30 # Processing Frequency. Same as waypoint_follower/pure_pursuit.cpp LOOP_RATE
+LOOP_RATE = 50 # Processing Frequency. Same as waypoint_follower/pure_pursuit.cpp LOOP_RATE
 MAX_DECEL = 5.0
 
 class WaypointUpdater(object):
