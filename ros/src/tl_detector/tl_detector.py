@@ -76,9 +76,11 @@ class TLDetector(object):
             self.waypoints_2d = [[waypoint.pose.pose.position.x, waypoint.pose.pose.position.y] for waypoint in waypoints.waypoints]
             self.waypoint_tree = KDTree(self.waypoints_2d)
 
-
     def traffic_cb(self, msg):
-        self.lights = msg.lights
+        if self.waypoint_tree and len(self.lights) == 0:
+            self.lights = msg.lights
+            self.preprocess_traffic_lights()
+
 
     def image_cb(self, msg):
         """Identifies red lights in the incoming camera image and publishes the index
@@ -158,9 +160,6 @@ class TLDetector(object):
         return lightState
 
     def preprocess_traffic_lights(self):
-        if not self.waypoints_2d or not self.lights:
-            return
-
         rospy.loginfo('TLDetector::preprocess_traffic_lights PREPROCESSING')
 
         # List of positions that correspond to the line to stop in front of for a given intersection
@@ -185,8 +184,6 @@ class TLDetector(object):
         """
         if not self.waypoint_tree:
             return -1, TrafficLight.UNKNOWN
-
-        self.preprocess_traffic_lights()
 
         closest_light = None
         line_wp_idx = None

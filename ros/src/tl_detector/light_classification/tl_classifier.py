@@ -3,6 +3,7 @@ import rospy
 import tensorflow as tf
 import numpy as np
 import cv2
+import time
 
 class TLClassifier(object):
     def __init__(self):
@@ -24,19 +25,6 @@ class TLClassifier(object):
 
         return graph
 
-    def read_tensor_from_image_file(file_name, input_height=128, input_width=128, input_mean=0, input_std=255):
-        input_name = "file_reader"
-        output_name = "normalized"
-        file_reader = tf.read_file(file_name, input_name)
-        image_reader = tf.image.decode_jpeg(file_reader, channels=3, name="jpeg_reader")
-        float_caster = tf.cast(image_reader, tf.float32)
-        dims_expander = tf.expand_dims(float_caster, 0)
-        resized = tf.image.resize_bilinear(dims_expander, [input_height, input_width])
-        normalized = tf.divide(tf.subtract(resized, [input_mean]), [input_std])
-        sess = tf.Session()
-        result = sess.run(normalized)
-
-        return result
 
     def get_classification(self, image):
         """Determines the color of the traffic light in the image
@@ -48,7 +36,9 @@ class TLClassifier(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
         """
+        tt = time.time()
         with tf.Session(graph=self.graph) as sess:
+            t1 = time.time()
             input_height = 224
             input_width = 224
             input_mean = 0
@@ -61,13 +51,18 @@ class TLClassifier(object):
             resized = tf.image.resize_bilinear(dims_expander, [input_height, input_width])
             normalized = tf.divide(tf.subtract(resized, [input_mean]), [input_std])
 
+            t2 = time.time()
             tensor = sess.run(normalized)
+            t3 = time.time()
             results = sess.run(self.output_operation.outputs[0], {self.input_operation.outputs[0]: tensor})
-    
+            
+            t4 = time.time()
             results = np.squeeze(results)
+            t5 = time.time()
             top_k = results.argsort()[-5:][::-1]
 
-            rospy.logwarn("TLClassifier::get_classification: {0}".format(['{0}:{1}'.format(self.labels[i],results[i]) for i in top_k]))
+            rospy.logwarn("TLClassifier::get_classification: Result: {0}".format(['{0}:{1}'.format(self.labels[i],results[i]) for i in top_k]))
+            rospy.logwarn("TLClassifier::get_classification: Time {0} {1} {2} {3} {4} {5} T:{6}".format(t1-tt, t2-t1, t3-t2, t4-t3, t5-t4, time.time()-t5, time.time()-tt))
             final_result = self.labels[top_k[0]]
             if final_result == "green":
                 rospy.loginfo('TLClassifier::get_classification - Got a GREEN')
