@@ -11,6 +11,7 @@ from scipy.spatial import KDTree
 import tf
 import cv2
 import yaml
+from cv2 import imwrite
 
 STATE_COUNT_THRESHOLD = 3
 
@@ -52,6 +53,7 @@ class TLDetector(object):
         self.light_wp = -1
         self.state = TrafficLight.UNKNOWN
         self.state_count = 0
+        self.image_counter = 0
 
         rospy.spin()
 
@@ -115,7 +117,7 @@ class TLDetector(object):
         closest_idx = self.waypoint_tree.query([x, y], 1)[1]
         return closest_idx
 
-    def get_light_state(self, light):
+    def get_light_state(self, light, wp):
         """Determines the current color of the traffic light
 
         Args:
@@ -126,17 +128,26 @@ class TLDetector(object):
 
         """
         # For testing, just return the light state
-        if(self.testing):
-            return light.state
+        #if(self.testing):
+        #    return light.state
 
         if(not self.has_image):
             self.prev_light_loc = None
-            return False
+            return TrafficLight.UNKNOWN
 
-        cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
+        # For dumping images to files for training the model
+        #res = cv2.imwrite('/home/student/workspace/CarND-Capstone/imgs/sim/img_{0}_{1}.png'.format(wp, self.image_counter), cv_image)
+
+        rospy.logwarn('TLDetector::get_light_state - new image')
+
+        lightState = TrafficLight.UNKNOWN
+        if self.image_counter % 10 == 0:
+            cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
+            lightState = self.light_classifier.get_classification(cv_image)
+        self.image_counter += 1
 
         #Get classification
-        return self.light_classifier.get_classification(cv_image)
+        return lightState
 
     def process_traffic_lights(self):
         """Finds closest visible traffic light, if one exists, and determines its
@@ -172,7 +183,7 @@ class TLDetector(object):
                 line_wp_idx = temp_wp_idx
 
         if closest_light:
-            state = self.get_light_state(closest_light)
+            state = self.get_light_state(closest_light, line_wp_idx)
             return line_wp_idx, state
 
         return -1, TrafficLight.UNKNOWN
