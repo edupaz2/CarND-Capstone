@@ -16,7 +16,7 @@ import numpy as np
 import time
 
 STATE_COUNT_THRESHOLD = 3
-LOOKAHEAD_WPS = 50 # Number of waypoints we will publish. You can change this number
+LOOKAHEAD_WPS = 100 # Number of waypoints we will publish. You can change this number
 
 class TLDetector(object):
     def __init__(self):
@@ -41,8 +41,6 @@ class TLDetector(object):
         self.upcoming_red_light_pub = rospy.Publisher('/traffic_waypoint', Int32, queue_size=1)
 
         # Member variables
-        self.testing = True
-
         self.current_pose = None
         self.base_waypoints = None
         self.waypoints_2d = None
@@ -74,9 +72,7 @@ class TLDetector(object):
             self.waypoint_tree = KDTree(self.waypoints_2d)
 
     def traffic_cb(self, msg):
-        if self.waypoints_2d != None and len(self.lights) == 0:
-            self.lights = msg.lights
-            self.preprocess_traffic_lights()
+        self.lights = msg.lights
 
 
     def image_cb(self, msg):
@@ -88,7 +84,7 @@ class TLDetector(object):
 
         """
         current_t = time.time()
-        if current_t - self.image_timestamp < 1.0:
+        if current_t - self.image_timestamp < 0.3:
             return
 
         self.image_timestamp = current_t
@@ -139,8 +135,7 @@ class TLDetector(object):
 
         """
         # For testing, just return the light state
-        #if(self.testing):
-        #    return light.state
+        # return light.state
 
         if(not self.has_image):
             self.prev_light_loc = None
@@ -168,7 +163,7 @@ class TLDetector(object):
         return lightState
 
     def preprocess_traffic_lights(self):
-        rospy.loginfo('TLDetector::preprocess_traffic_lights PREPROCESSING')
+        #rospy.loginfo('TLDetector::preprocess_traffic_lights PREPROCESSING')
 
         # List of positions that correspond to the line to stop in front of for a given intersection
         stop_line_positions = self.config['stop_line_positions']
@@ -195,6 +190,8 @@ class TLDetector(object):
 
         closest_light = None
         line_wp_idx = None
+
+        self.preprocess_traffic_lights()
 
         if(self.current_pose):
             car_wp_idx = self.get_closest_waypoint(self.current_pose.pose.position.x, self.current_pose.pose.position.y)
