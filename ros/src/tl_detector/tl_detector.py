@@ -12,11 +12,11 @@ import tf
 import cv2
 import yaml
 from cv2 import imwrite
+import numpy as np
 import time
 
 STATE_COUNT_THRESHOLD = 3
 LOOKAHEAD_WPS = 50 # Number of waypoints we will publish. You can change this number
-LOOP_RATE = 50 # Processing Frequency. Same as waypoint_follower/pure_pursuit.cpp LOOP_RATE
 
 class TLDetector(object):
     def __init__(self):
@@ -60,13 +60,7 @@ class TLDetector(object):
         self.state_count = 0
         self.image_timestamp = time.time()
 
-        self.loop()
-
-
-    def loop(self):
-        rate = rospy.Rate(LOOP_RATE)
-        while not rospy.is_shutdown():
-            rate.sleep()
+        rospy.spin()
 
 
     def pose_cb(self, msg):
@@ -80,7 +74,7 @@ class TLDetector(object):
             self.waypoint_tree = KDTree(self.waypoints_2d)
 
     def traffic_cb(self, msg):
-        if self.waypoint_tree and len(self.lights) == 0:
+        if self.waypoints_2d != None and len(self.lights) == 0:
             self.lights = msg.lights
             self.preprocess_traffic_lights()
 
@@ -156,6 +150,14 @@ class TLDetector(object):
 
         lightState = TrafficLight.UNKNOWN
         cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "rgb8")
+
+        cv_image = cv2.resize(cv_image, dsize=(224,224))
+        cv_image = cv_image.astype(np.float32)
+        cv_image = np.expand_dims(cv_image, 0)
+        # Preprocess
+        cv_image = (cv_image-127.) / 127.
+
+
         lightState = self.light_classifier.get_classification(cv_image)
         #rospy.logwarn('TLDetector::get_light_state - Processing result: {0}'.format(lightState))
 
