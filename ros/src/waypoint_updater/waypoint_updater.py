@@ -137,7 +137,7 @@ class WaypointUpdater(object):
     def decelerate_waypoints(self, waypoints):
         #rospy.logwarn('WaypointUpdater::decelerate_waypoints BEGIN {0}'.format(len(waypoints)))
         # Choose where to stop
-        stop_idx = max(self.stopline_wp_idx - self.closest_waypoint_idx - 5, 0)
+        stop_idx = max(self.stopline_wp_idx - self.closest_waypoint_idx - 6, 0)
         stop_wp = waypoints[stop_idx]
         #rospy.logwarn('WaypointUpdater::decelerate_waypoints From {0} To {1} StopAt {2}-{3}'.format(self.closest_waypoint_idx, self.closest_waypoint_idx+len(waypoints)-1, self.stopline_wp_idx, stop_idx))
         decel_wp = []
