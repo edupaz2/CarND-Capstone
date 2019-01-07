@@ -2,7 +2,7 @@ from styx_msgs.msg import TrafficLight
 import rospy
 import tensorflow as tf
 import numpy as np
-# import cv2
+import cv2
 import time
 
 class TLClassifier(object):
@@ -16,14 +16,13 @@ class TLClassifier(object):
         self.sess = tf.Session(graph=self.graph)
 
     def load_graph(self, model_file):
-        with tf.device('/gpu:0'):
-            graph = tf.Graph()
-            graph_def = tf.GraphDef()
+        graph = tf.Graph()
+        graph_def = tf.GraphDef()
 
-            with open(model_file, "rb") as f:
-                graph_def.ParseFromString(f.read())
-            with graph.as_default():
-                tf.import_graph_def(graph_def)
+        with open(model_file, "rb") as f:
+            graph_def.ParseFromString(f.read())
+        with graph.as_default():
+            tf.import_graph_def(graph_def)
 
         return graph
 
@@ -40,8 +39,17 @@ class TLClassifier(object):
         """
         tt = time.time()
 
-        with tf.device('/gpu:0'):
-            results = self.sess.run(self.output_operation.outputs[0], {self.input_operation.outputs[0]: image})
+        with self.graph.as_default():
+            input_height = 224
+            input_width = 224
+            input_mean = 0
+            input_std = 255
+
+            dims_expander = tf.expand_dims(image, 0)
+            resized = tf.image.resize_bilinear(dims_expander, [input_height, input_width])
+            normalized = tf.divide(tf.subtract(resized, [input_mean]), [input_std])
+            tensor = self.sess.run(normalized)
+            results = self.sess.run(self.output_operation.outputs[0], {self.input_operation.outputs[0]: tensor})
 
         results = np.squeeze(results)
         top_k = results.argsort()[-5:][::-1]

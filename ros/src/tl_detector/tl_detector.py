@@ -145,14 +145,6 @@ class TLDetector(object):
 
         lightState = TrafficLight.UNKNOWN
         cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "rgb8")
-
-        cv_image = cv2.resize(cv_image, dsize=(224,224))
-        cv_image = cv_image.astype(np.float32)
-        cv_image = np.expand_dims(cv_image, 0)
-        # Preprocess
-        cv_image = (cv_image-127.) / 127.
-
-
         lightState = self.light_classifier.get_classification(cv_image)
         #rospy.logwarn('TLDetector::get_light_state - Processing result: {0}'.format(lightState))
 
