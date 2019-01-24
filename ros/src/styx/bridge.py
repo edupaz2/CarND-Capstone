@@ -17,6 +17,7 @@ import numpy as np
 from PIL import Image as PIL_Image
 from io import BytesIO
 import base64
+import time
 
 import math
 
@@ -44,6 +45,7 @@ class Bridge(object):
         self.yaw = None
         self.angular_vel = 0.
         self.bridge = CvBridge()
+        self.image_timestamp = time.time()
 
         self.callbacks = {
             '/vehicle/steering_cmd': self.callback_steering,
@@ -175,6 +177,12 @@ class Bridge(object):
         self.publishers['dbw_status'].publish(Bool(data))
 
     def publish_camera(self, data):
+        # Check when the last image was published
+        current_t = time.time()
+        if current_t - self.image_timestamp < 0.5:
+            return
+        self.image_timestamp = current_t
+
         imgString = data["image"]
         image = PIL_Image.open(BytesIO(base64.b64decode(imgString)))
         image_array = np.asarray(image)
