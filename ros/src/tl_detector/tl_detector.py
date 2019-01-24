@@ -88,10 +88,10 @@ class TLDetector(object):
         light_wp, closest_light = self.process_traffic_lights()
         state = TrafficLight.UNKNOWN
         if light_wp != -1:
-            state = closest_light.state
-            #self.has_image = True
-            #self.camera_image = msg
-            #state = self.get_light_state(closest_light, light_wp)
+            #state = closest_light.state
+            self.has_image = True
+            self.camera_image = msg
+            state = self.get_light_state(closest_light, light_wp)
 
         '''
         Publish upcoming red lights at camera frequency.
@@ -105,7 +105,7 @@ class TLDetector(object):
             self.light_wp = light_wp
         elif self.state_count == STATE_COUNT_THRESHOLD:
             light_wp = light_wp if state == TrafficLight.RED or state == TrafficLight.YELLOW else -1
-            rospy.logwarn('TLDetector::image_cb. Lightwp: {0}-{1} State: {2}-{3}'.format(light_wp, self.light_wp, state, self.state))
+            #rospy.logwarn('TLDetector::image_cb. Lightwp: {0}-{1} State: {2}-{3}'.format(light_wp, self.light_wp, state, self.state))
             self.upcoming_red_light_pub.publish(Int32(light_wp))
 
         self.state_count += 1
