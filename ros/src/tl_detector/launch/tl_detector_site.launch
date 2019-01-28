@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
     <node pkg="tl_detector" type="tl_detector.py" name="tl_detector" output="screen" cwd="node">
-    	<param name="model" value="light_classification/models/mobilenet_v1_1.0_224.pb" />
+    	<param name="model" value="light_classification/models/mobilenet_v1_1.0_224.site.pb" />
     </node>
     <node pkg="tl_detector" type="light_publisher.py" name="light_publisher" output="screen" cwd="node"/>
 </launch>
